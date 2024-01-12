@@ -1,0 +1,42 @@
+{
+    "name": "mlops-workshop-dev-environment-demo",
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11",
+    "settings": {
+        "terminal.integrated.profiles.linux": {
+            "zsh": {
+                "path": "/bin/zsh"
+            },
+            "python": {
+                "path": "/usr/local/bin/python"
+            },
+            "tmux": {
+                "path": "bash",
+                "args": [
+                    "-c",
+                    "tmux new -ADs ${workspaceFolderBasename}"
+                ],
+                "icon": "terminal-tmux"
+            }
+        },
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "ms-toolsai.jupyter",
+        "eamodio.gitlens",
+        "gruntfuggly.todo-tree",
+        "njpwerner.autodocstring",
+        "congyiwu.vscode-jupytext"
+    ],
+    "features": {
+        "ghcr.io/iterative/features/dvc:1": "1.0.4"
+    },
+    "remoteUser": "vscode",
+    "postStartCommand": "./setup.sh"
+}
