@@ -1,0 +1,6 @@
+outs:
+- md5: 2babed0d180aff9304e0fc9fa26bcefa.dir
+  size: 5091996
+  nfiles: 1
+  hash: md5
+  path: lotr-char-mlflow
