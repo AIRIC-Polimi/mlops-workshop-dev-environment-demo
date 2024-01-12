@@ -1,0 +1,5 @@
+outs:
+- md5: 2a398c0671203fa7c7603996aa299716
+  size: 3260922
+  hash: md5
+  path: lotr.txt
