@@ -1,0 +1,6 @@
+outs:
+- md5: 25c82fc9f670c2b2bbb7e47f241b56e3.dir
+  size: 6522061
+  nfiles: 3
+  hash: md5
+  path: lotr
