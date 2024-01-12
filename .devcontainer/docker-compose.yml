@@ -1,0 +1,53 @@
+version: '3.7'
+
+volumes:
+  nanogpt_minio_data:
+  nanogpt_mysql_data:
+
+
+services:
+  dev-environment:
+    image: mcr.microsoft.com/vscode/devcontainers/python:0-3.11
+    volumes:
+      - ..:/workspaces/mlops-workshop-dev-environment-demo:cached
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow-server:5000
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+  mlflow-artifacts-store:
+    image: minio/minio
+    command: server /data --console-address ':9001' --address ':9000'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: p4ssword
+    volumes:
+      - nanogpt_minio_data:/data
+
+  mlflow-backend-store:
+    image: mysql:8.0.19
+    environment:
+      MYSQL_DATABASE: mlflow_db
+      MYSQL_USER: mlflow_user
+      MYSQL_PASSWORD: mlflow_password
+      MYSQL_ROOT_PASSWORD: mysql_root_pw
+    volumes:
+      - nanogpt_mysql_data:/var/lib/mysql
+
+  mlflow-server:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile-mlflow
+    depends_on:
+      - mlflow-backend-store
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://mlflow-artifacts-store:9000
+      AWS_ACCESS_KEY_ID: user
+      AWS_SECRET_ACCESS_KEY: p4ssword
+    ports:
+      - "5000:5000"
+    entrypoint: ""
+    command: mlflow server --backend-store-uri mysql+pymysql://mlflow_user:mlflow_password@mlflow-backend-store:3306/mlflow_db --artifacts-destination s3://mlflow/ --serve-artifacts --host 0.0.0.0

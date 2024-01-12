@@ -1,6 +1,8 @@
 {
     "name": "mlops-workshop-dev-environment-demo",
-    "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "dev-environment",
+    "workspaceFolder": "/workspaces/mlops-workshop-dev-environment-demo",
     "settings": {
         "terminal.integrated.profiles.linux": {
             "zsh": {

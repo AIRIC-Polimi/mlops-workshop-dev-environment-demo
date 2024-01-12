@@ -44,6 +44,10 @@ init_from = 'scratch' # 'scratch' or 'resume' or 'gpt2*'
 wandb_log = False # disabled by default
 wandb_project = 'owt'
 wandb_run_name = 'gpt2' # 'run' + str(time.time())
+# mlflow logging
+mlflow_log = False # disabled by default
+mlflow_experiment_name = 'mlflow_experiment'
+mlflow_run_name = 'mlflow_run'
 # data
 dataset = 'openwebtext'
 gradient_accumulation_steps = 5 * 8 # used to simulate larger batch sizes
@@ -240,9 +244,14 @@ def get_lr(it):
 
 # logging
 if wandb_log and master_process:
-    # TODO: hook ClearML
     import wandb
     wandb.init(project=wandb_project, name=wandb_run_name, config=config)
+if mlflow_log and master_process:
+    import mlflow
+    experiment = mlflow.get_experiment_by_name(mlflow_experiment_name)
+    experiment_id = experiment.experiment_id if experiment is not None else mlflow.create_experiment(mlflow_experiment_name)
+    mlflow.start_run(experiment_id=experiment_id, run_name=f"{mlflow_run_name} - {time.time()}")
+    mlflow.log_params(config)
 
 # training loop
 X, Y = get_batch('train') # fetch the very first batch
@@ -269,6 +278,11 @@ while True:
                 "lr": lr,
                 "mfu": running_mfu*100, # convert to percentage
             })
+        if mlflow_log:
+            mlflow.log_metric("train loss", losses['train'], step=iter_num)
+            mlflow.log_metric("val loss", losses['val'], step=iter_num)
+            mlflow.log_metric("lr", lr, step=iter_num)
+            mlflow.log_metric("mfu", running_mfu*100, step=iter_num) # convert to percentage
         if losses['val'] < best_val_loss or always_save_checkpoint:
             best_val_loss = losses['val']
             if iter_num > 0:
@@ -332,3 +346,6 @@ while True:
 
 if ddp:
     destroy_process_group()
+
+if mlflow_log and master_process:
+    mlflow.end_run()
