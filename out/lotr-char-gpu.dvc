@@ -1,0 +1,6 @@
+outs:
+- md5: f77a93c3d99054032a5e845f5fce0c56.dir
+  size: 303547813
+  nfiles: 1
+  hash: md5
+  path: lotr-char-gpu
