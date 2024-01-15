@@ -10,7 +10,7 @@ data "aws_ami" "amazon_linux_2" {
 data "aws_ami" "ubuntu22" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
-  
+
   filter {
     name   = "name"
     values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-*"]
@@ -99,63 +99,6 @@ resource "aws_instance" "ec2_instance" {
 
     reboot
   EOF
-  
-  # user_data = <<-EOF
-  #   #!/bin/bash
-
-  #   if [[ ! -f /home/ec2-user/sem-first-start ]]; then
-    
-  #     set -ex
-  #     sudo yum update -y
-  #     # Git
-  #     sudo yum install -y git
-
-  #     # Docker
-  #     sudo amazon-linux-extras install docker -y
-  #     sudo service docker start
-  #     # Enable for next restart(s)
-  #     sudo systemctl enable docker
-  #     sudo usermod -a -G docker ec2-user
-      
-  #     # Docker-compose
-  #     sudo curl -L https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-  #     sudo chmod +x /usr/local/bin/docker-compose
-
-  #     # Install development tools (includes gcc)
-  #     sudo yum groupinstall -y "Development Tools"
-
-  #     # Setup semaphone for next reboot
-  #     touch /home/ec2-user/sem-first-start
-  #     sudo sed -i 's/scripts-user/[scripts-user, always]/' /etc/cloud/cloud.cfg
-
-  #     sudo reboot
-    
-  #   fi
-
-  #   # Install Nvidia drivers
-  #   BASE_URL=https://us.download.nvidia.com/tesla
-  #   DRIVER_VERSION=510.73.08
-  #   curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-  #   chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run 
-  #   sudo sh NVIDIA-Linux-x86_64-$DRIVER_VERSION.run -qs
-
-  #   # Nvidia container toolkit
-  #   curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-  #   sudo yum update
-  #   sudo yum install -y nvidia-container-toolkit
-  #   sudo systemctl restart docker
-
-  #   # TODO: remove
-  #   # Nvidia Docker runtime
-  #   # curl -s -L https://nvidia.github.io/libnvidia-container/amzn2/libnvidia-container.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-  #   # sudo yum clean expire-cache
-  #   # sudo yum install -y nvidia-docker2
-  #   # sudo systemctl restart docker
-
-  #   # Cleanup semaphone
-  #   rm /home/ec2-user/sem-first-start
-  #   sudo sed -i 's/\[scripts-user, always\]/scripts-user/' /etc/cloud/cloud.cfg
-  # EOF
 
   vpc_security_group_ids = [
     module.ec2_ssh_security_group.security_group_id,
@@ -163,7 +106,7 @@ resource "aws_instance" "ec2_instance" {
   ]
 
   tags = {
-    Name        = "mlops-workshop-demo"
+    Name = "mlops-workshop-demo"
   }
 
   key_name                = aws_key_pair.ssh_key.key_name
