@@ -21,9 +21,3 @@ variable "ec2_instance_volume_size" {
   type        = number
   default     = 100
 }
-
-variable "ec2_instance_use_graphics_ami" {
-  description = "Whether to launch the EC2 instance with the AMI with NVIDIA Tesla drivers preinstalled or to use the standard Amazon Linux 2 one"
-  type        = bool
-  default     = false
-}

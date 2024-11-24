@@ -1,12 +1,3 @@
-data "aws_ami" "amazon_linux_2" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-${var.ec2_instance_use_graphics_ami ? "graphics-" : ""}hvm-*-x86_64-*"]
-  }
-}
-
 data "aws_ami" "ubuntu22" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
