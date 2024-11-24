@@ -4,7 +4,7 @@ data "aws_ami" "ubuntu22" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-*"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-*"]
   }
 
   filter {
@@ -48,16 +48,20 @@ resource "aws_instance" "ec2_instance" {
 
   user_data = <<-EOF
     #!/bin/bash
+
+    set -e
     
     if [[ ! -f /home/ubuntu/_build_essential ]]; then
+      echo "[USER] Installing build essentials"
       sudo NEEDRESTART_MODE=a apt-get update -y
       # Git and build essentials (autorestart daemons if needed)
-      sudo NEEDRESTART_MODE=a apt-get install -y git build-essential
+      sudo NEEDRESTART_MODE=a apt-get install -y git build-essential ubuntu-drivers-common
       touch /home/ubuntu/_build_essential
     fi
 
     # Docker
     if [[ ! -f /home/ubuntu/_docker ]]; then
+      echo "[USER] Installing docker"
       sudo NEEDRESTART_MODE=a apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo NEEDRESTART_MODE=a apt-key add -
       sudo NEEDRESTART_MODE=a add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
@@ -71,6 +75,7 @@ resource "aws_instance" "ec2_instance" {
 
     # Docker-compose
     if [[ ! -f /home/ubuntu/_docker_compose ]]; then
+      echo "[USER] Installing docker-compose"
       sudo NEEDRESTART_MODE=a curl -L https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
       sudo NEEDRESTART_MODE=a chmod +x /usr/local/bin/docker-compose
       touch /home/ubuntu/_docker_compose
@@ -78,16 +83,16 @@ resource "aws_instance" "ec2_instance" {
 
     # Install Nvidia drivers
     if [[ ! -f /home/ubuntu/_cuda ]]; then
-      BASE_URL=https://us.download.nvidia.com/tesla
-      DRIVER_VERSION=535.129.03
-      curl -fSsl -O $BASE_URL/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run
-      chmod +x NVIDIA-Linux-x86_64-$DRIVER_VERSION.run 
-      sudo NEEDRESTART_MODE=a sh NVIDIA-Linux-x86_64-$DRIVER_VERSION.run -qs
+      echo "[USER] Installing nvidia drivers"
+      sudo apt install -y linux-modules-nvidia-550-server-open-6.8.0-49-generic
+      sudo apt install -y nvidia-utils-550-server
+      sudo apt install -y nvidia-driver-550 nvidia-dkms-550
       touch /home/ubuntu/_cuda
     fi
 
     # Nvidia container toolkit
     if [[ ! -f /home/ubuntu/_toolkit ]]; then
+      echo "[USER] Installing nvidia container toolkit"
       curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo NEEDRESTART_MODE=a gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
       curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo NEEDRESTART_MODE=a tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
       sudo NEEDRESTART_MODE=a apt-get update
@@ -97,6 +102,15 @@ resource "aws_instance" "ec2_instance" {
       sudo systemctl restart docker
       touch /home/ubuntu/_toolkit
     fi
+
+    if [[ ! -f /home/ubuntu/_repo ]]; then
+      echo "[USER] Setting up repo"
+      git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git
+      cd mlops-workshop-dev-environment-demo
+      touch /home/ubuntu/_repo
+    fi
+
+    set +e
 
     reboot
   EOF
