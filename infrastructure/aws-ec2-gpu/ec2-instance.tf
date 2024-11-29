@@ -129,3 +129,29 @@ resource "aws_instance" "ec2_instance" {
   disable_api_termination = false
   ebs_optimized           = true
 }
+
+resource "null_resource" "append_ssh_config" {
+  provisioner "local-exec" {
+    command = <<-EOT
+      identity_file_abspath=`realpath .`
+      host="mlops-devenv-demo"
+
+      if [ "$(grep 'Host $host' ~/.ssh/config)" ]; then
+          sed -i "/Host $host/,/HostName/ s/HostName .*/HostName ${aws_instance.ec2_instance.public_dns}/" ~/.ssh/config
+          sed -i "/Host $host/,/IdentityFile/ s/IdentityFile .*/IdentityFile $identity_file_abspath/ssh_private_key.pem/" ~/.ssh/config
+      else
+          ssh_config=$(cat <<END
+
+      Host $host
+        HostName ${aws_instance.ec2_instance.public_dns}
+        User ubuntu
+        IdentityFile "$identity_file_abspath/ssh_private_key.pem"
+        ForwardAgent yes
+      END
+      )
+
+          echo "$ssh_config" >> ~/.ssh/config
+      fi
+    EOT
+  }
+}
