@@ -105,7 +105,7 @@ resource "aws_instance" "ec2_instance" {
 
     if [[ ! -f /home/ubuntu/_repo ]]; then
       echo "[USER] Setting up repo"
-      git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git
+      git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git /home/ubuntu/mlops-workshop-dev-environment-demo
       cd mlops-workshop-dev-environment-demo
       touch /home/ubuntu/_repo
     fi
