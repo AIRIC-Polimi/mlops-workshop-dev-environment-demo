@@ -3,6 +3,9 @@
     "dockerComposeFile": "docker-compose.yml",
     "service": "dev-environment",
     "workspaceFolder": "/workspaces/mlops-workshop-dev-environment-demo",
+    "mounts": [
+        "type=bind,src=${localWorkspaceFolder}/.aws,dst=/home/vscode/.aws"
+    ],
     "customizations": {
         "vscode": {
             "settings": {
