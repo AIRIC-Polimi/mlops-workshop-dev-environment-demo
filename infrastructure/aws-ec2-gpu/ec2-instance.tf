@@ -38,9 +38,46 @@ resource "aws_key_pair" "ssh_key" {
   }
 }
 
+
+data "aws_iam_policy_document" "ec2_assume_role" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ec2.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "s3_dvc_rw_access" {
+  statement {
+    actions = ["s3:*"]
+
+    resources = ["arn:aws:s3:::mlops-workshop-demo"]
+  }
+}
+
+resource "aws_iam_role" "ec2_iam_role" {
+  name_prefix = "mlops-workshop-demo-iam-role"
+  assume_role_policy = data.aws_iam_policy_document.ec2_assume_role.json
+}
+
+resource "aws_iam_role_policy" "join_policy" {
+  role       = aws_iam_role.ec2_iam_role.name
+  policy = data.aws_iam_policy_document.s3_dvc_rw_access.json
+}
+
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name_prefix = "mlops-workshop-demo-iam-role-instance-profile"
+  role = aws_iam_role.ec2_iam_role.name
+}
+
 resource "aws_instance" "ec2_instance" {
   ami           = data.aws_ami.ubuntu22.id
   instance_type = var.ec2_instance_type
+
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
   root_block_device {
     volume_size = var.ec2_instance_volume_size
@@ -103,10 +140,12 @@ resource "aws_instance" "ec2_instance" {
       touch /home/ubuntu/_toolkit
     fi
 
+    # Setting up repository
     if [[ ! -f /home/ubuntu/_repo ]]; then
       echo "[USER] Setting up repo"
       git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git /home/ubuntu/mlops-workshop-dev-environment-demo
-      cd mlops-workshop-dev-environment-demo
+      cd /home/ubuntu/mlops-workshop-dev-environment-demo
+      docker run -it --rm -v `realpath .`:/workspace --workdir /workspace python:3.12-slim bash -c 'pip install dvc[s3] && dvc pull'
       touch /home/ubuntu/_repo
     fi
 
