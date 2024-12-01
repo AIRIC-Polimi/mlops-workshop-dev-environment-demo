@@ -14,13 +14,13 @@ services:
       MLFLOW_TRACKING_URI: http://mlflow-server:5000
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [ gpu ]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
 
   mlflow-artifacts-store:
     image: minio/minio

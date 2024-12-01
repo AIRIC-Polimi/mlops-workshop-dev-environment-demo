@@ -6,6 +6,10 @@
     "mounts": [
         "type=bind,src=${localWorkspaceFolder}/.aws,dst=/home/vscode/.aws"
     ],
+    "hostRequirements": {
+        "gpu": "optional"
+    },
+    "initializeCommand": "cp .devcontainer/docker-compose-$(if which nvidia-container-toolkit 2>&1 >/dev/null; then echo 'gpu'; else echo 'cpu'; fi).yml .devcontainer/docker-compose.yml",
     "customizations": {
         "vscode": {
             "settings": {
