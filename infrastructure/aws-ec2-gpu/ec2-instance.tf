@@ -171,6 +171,7 @@ resource "aws_instance" "ec2_instance" {
 
 resource "null_resource" "append_ssh_config" {
   provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
     command = <<-EOT
       identity_file_abspath=`realpath .`
       host="mlops-devenv-demo"
@@ -192,6 +193,12 @@ resource "null_resource" "append_ssh_config" {
 
           echo "$ssh_config" >> ~/.ssh/config
       fi
+
+      printf "%s" "waiting for server to become reachable"
+      while ! nc -zv ${aws_instance.ec2_instance.public_dns} 22 &> /dev/null; do
+          printf "%c" "."
+          sleep 5
+      done
 
       # This is to append to known_hosts file the fingerprints of the new server
       ssh-keyscan ${aws_instance.ec2_instance.public_dns} >> $HOME/.ssh/known_hosts
