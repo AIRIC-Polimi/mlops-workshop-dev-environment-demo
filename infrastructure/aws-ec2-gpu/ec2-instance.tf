@@ -136,17 +136,18 @@ resource "null_resource" "append_ssh_config" {
       identity_file_abspath=`realpath .`
       host="mlops-devenv-demo"
 
-      if [ "$(grep 'Host $host' ~/.ssh/config)" ]; then
+      grep "Host $host" ~/.ssh/config 2>&1 > /dev/null
+      if [ $? -eq 0 ]; then
           sed -i "/Host $host/,/HostName/ s/HostName .*/HostName ${aws_instance.ec2_instance.public_dns}/" ~/.ssh/config
-          sed -i "/Host $host/,/IdentityFile/ s/IdentityFile .*/IdentityFile $identity_file_abspath/ssh_private_key.pem/" ~/.ssh/config
+          sed -i "/Host $host/,/IdentityFile/ s~IdentityFile .*~IdentityFile $identity_file_abspath/ssh_private_key.pem~" ~/.ssh/config
       else
           ssh_config=$(cat <<END
 
       Host $host
-        HostName ${aws_instance.ec2_instance.public_dns}
-        User ubuntu
-        IdentityFile "$identity_file_abspath/ssh_private_key.pem"
-        ForwardAgent yes
+          HostName ${aws_instance.ec2_instance.public_dns}
+          User ubuntu
+          IdentityFile "$identity_file_abspath/ssh_private_key.pem"
+          ForwardAgent yes
       END
       )
 
