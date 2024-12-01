@@ -143,7 +143,11 @@ resource "aws_instance" "ec2_instance" {
       echo "[USER] Setting up repo"
       git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git /home/ubuntu/mlops-workshop-dev-environment-demo
       cd /home/ubuntu/mlops-workshop-dev-environment-demo
-      docker run -it --rm -v `realpath .`:/workspace --workdir /workspace python:3.12-slim bash -c 'pip install dvc[s3] && dvc pull'
+      docker run --rm -v `realpath .`:/workspace --workdir /workspace python:3.12-slim bash -c 'pip install dvc[s3] && dvc pull'
+      # Prebuild Docker images
+      docker compose -f .devcontainer/docker-compose-gpu.yml build
+      # Make sure everything in the repo is owned by the non-root user
+      chown -R ubuntu:ubuntu /home/ubuntu/mlops-workshop-dev-environment-demo
       touch /home/ubuntu/_repo
     fi
 
