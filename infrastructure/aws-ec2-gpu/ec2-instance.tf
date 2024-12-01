@@ -192,6 +192,9 @@ resource "null_resource" "append_ssh_config" {
 
           echo "$ssh_config" >> ~/.ssh/config
       fi
+
+      # This is to append to known_hosts file the fingerprints of the new server
+      ssh-keyscan ${aws_instance.ec2_instance.public_dns} >> $HOME/.ssh/known_hosts
     EOT
   }
 }
