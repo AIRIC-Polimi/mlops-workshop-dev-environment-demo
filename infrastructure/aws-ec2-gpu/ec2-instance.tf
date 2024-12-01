@@ -86,16 +86,22 @@ resource "aws_instance" "ec2_instance" {
   user_data = <<-EOF
     #!/bin/bash -e
 
+    start_time=$(date +%s)
+
     if [[ ! -f /home/ubuntu/_build_essential ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Installing build essentials"
       sudo NEEDRESTART_MODE=a apt-get update -y
       # Git and build essentials (autorestart daemons if needed)
       sudo NEEDRESTART_MODE=a apt-get install -y git build-essential ubuntu-drivers-common
       touch /home/ubuntu/_build_essential
+      step_end_time=$(date +%s)
+      echo "[USER] build essentials installed in $(($step_end_time-$step_start_time)) seconds"
     fi
 
     # Docker
     if [[ ! -f /home/ubuntu/_docker ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Installing docker"
       sudo NEEDRESTART_MODE=a apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
       curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo NEEDRESTART_MODE=a apt-key add -
@@ -106,27 +112,36 @@ resource "aws_instance" "ec2_instance" {
       sudo NEEDRESTART_MODE=a systemctl enable docker
       sudo NEEDRESTART_MODE=a usermod -a -G docker ubuntu
       touch /home/ubuntu/_docker
+      step_end_time=$(date +%s)
+      echo "[USER] docker installed in $(($step_end_time-$step_start_time)) seconds"
     fi
 
     # Docker-compose
     if [[ ! -f /home/ubuntu/_docker_compose ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Installing docker-compose"
       sudo NEEDRESTART_MODE=a curl -L https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
       sudo NEEDRESTART_MODE=a chmod +x /usr/local/bin/docker-compose
       touch /home/ubuntu/_docker_compose
+      step_end_time=$(date +%s)
+      echo "[USER] docker-compose installed in $(($step_end_time-$step_start_time)) seconds"
     fi
 
     # Install Nvidia drivers
     if [[ ! -f /home/ubuntu/_cuda ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Installing nvidia drivers"
       sudo apt install -y linux-modules-nvidia-550-server-open-6.8.0-49-generic
       sudo apt install -y nvidia-utils-550-server
       sudo apt install -y nvidia-driver-550 nvidia-dkms-550
       touch /home/ubuntu/_cuda
+      step_end_time=$(date +%s)
+      echo "[USER] nvidia drivers installed in $(($step_end_time-$step_start_time)) seconds"
     fi
 
     # Nvidia container toolkit
     if [[ ! -f /home/ubuntu/_toolkit ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Installing nvidia container toolkit"
       curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo NEEDRESTART_MODE=a gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
       curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo NEEDRESTART_MODE=a tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
@@ -136,10 +151,13 @@ resource "aws_instance" "ec2_instance" {
       sudo nvidia-ctk runtime configure --runtime=docker
       sudo systemctl restart docker
       touch /home/ubuntu/_toolkit
+      step_end_time=$(date +%s)
+      echo "[USER] nvidia container toolkit installed in $(($step_end_time-$step_start_time)) seconds"
     fi
 
     # Setting up repository
     if [[ ! -f /home/ubuntu/_repo ]]; then
+      step_start_time=$(date +%s)
       echo "[USER] Setting up repo"
       git clone https://github.com/AIRIC-Polimi/mlops-workshop-dev-environment-demo.git /home/ubuntu/mlops-workshop-dev-environment-demo
       cd /home/ubuntu/mlops-workshop-dev-environment-demo
@@ -149,7 +167,12 @@ resource "aws_instance" "ec2_instance" {
       # Make sure everything in the repo is owned by the non-root user
       chown -R ubuntu:ubuntu /home/ubuntu/mlops-workshop-dev-environment-demo
       touch /home/ubuntu/_repo
+      step_end_time=$(date +%s)
+      echo "[USER] repository setup in $(($step_end_time-$step_start_time)) seconds"
     fi
+
+    end_time=$(date +%s)
+    echo "[USER] initialization completed in $(($end_time-$start_time)) seconds"
 
     reboot
   EOF
