@@ -84,10 +84,8 @@ resource "aws_instance" "ec2_instance" {
   }
 
   user_data = <<-EOF
-    #!/bin/bash
+    #!/bin/bash -e
 
-    set -e
-    
     if [[ ! -f /home/ubuntu/_build_essential ]]; then
       echo "[USER] Installing build essentials"
       sudo NEEDRESTART_MODE=a apt-get update -y
@@ -148,8 +146,6 @@ resource "aws_instance" "ec2_instance" {
       docker run -it --rm -v `realpath .`:/workspace --workdir /workspace python:3.12-slim bash -c 'pip install dvc[s3] && dvc pull'
       touch /home/ubuntu/_repo
     fi
-
-    set +e
 
     reboot
   EOF
